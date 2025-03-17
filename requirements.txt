@@ -1,12 +1,11 @@
 streamlit
 psycopg2-binary
 python-dotenv
-langchain-groq
-langchain-core
-langchain-community
 pandas
 plotly
 jinja2
 openai
-smtplib
-email
+langchain-core
+langchain-groq
+langchain-community
+SQLAlchemy
