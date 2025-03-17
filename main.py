@@ -31,14 +31,27 @@ st.set_page_config(page_title="DB Manager", layout="wide")
 # ====== Unified Database Handler ======
 def get_db_connection():
     """Create a new PostgreSQL connection"""
-    return psycopg2.connect(
-        host=os.getenv('DB_HOST'),
-        database=os.getenv('DB_NAME'),
-        user=os.getenv('DB_USER'),
-        password=os.getenv('DB_PASSWORD'),
-        port=os.getenv('DB_PORT'),
-        sslmode='require'
-    )
+    # Check if we're running in Streamlit Cloud
+    if hasattr(st, 'secrets'):
+        # Use Streamlit secrets
+        return psycopg2.connect(
+            host=st.secrets["DB_HOST"],
+            database=st.secrets["DB_NAME"], 
+            user=st.secrets["DB_USER"],
+            password=st.secrets["DB_PASSWORD"],
+            port=st.secrets["DB_PORT"],
+            sslmode='require'
+        )
+    else:
+        # Use local environment variables
+        return psycopg2.connect(
+            host=os.getenv('DB_HOST'),
+            database=os.getenv('DB_NAME'),
+            user=os.getenv('DB_USER'),
+            password=os.getenv('DB_PASSWORD'),
+            port=os.getenv('DB_PORT'),
+            sslmode='require'
+        )
 
 def get_contacts():
     """Fetch name and skills from Contacts table."""
@@ -414,7 +427,12 @@ def calculate_initial_date(deadline_input: str) -> datetime:
         # Default to today if no valid deadline is found
         return default_date
 
-POSTGRES_URI = "postgresql://neondb_owner:npg_LgZ4en1QpsyD@ep-broad-bush-a5xjz0wm-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require"
+# Update DB_URI to use Streamlit secrets when available
+if hasattr(st, 'secrets'):
+    POSTGRES_URI = f"postgresql://{st.secrets['DB_USER']}:{st.secrets['DB_PASSWORD']}@{st.secrets['DB_HOST']}/{st.secrets['DB_NAME']}?sslmode=require"
+else:
+    POSTGRES_URI = "postgresql://neondb_owner:npg_LgZ4en1QpsyD@ep-broad-bush-a5xjz0wm-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require"
+
 conn_pool = psycopg2.pool.SimpleConnectionPool(1, 10, dsn=POSTGRES_URI)
 
 def execute_query(sql_query: str, params=None):
